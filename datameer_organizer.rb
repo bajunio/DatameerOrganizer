@@ -17,14 +17,18 @@ require_relative 'datameer_organizer.properties.rb'
 class DatameerOrganizer
   include DatameerOrganizerProperties
 
-  attr_accessor :datameer_versions, :base_dir, :pid, :port_check
+  attr_reader :datameer_versions, :base_dir, :pid, :port_check, :port
 
   def initialize
     @base_dir = DatameerOrganizerProperties.base_dir
+    @port = DatameerOrganizerProperties.default_port
     @datameer_versions = []
     @pid = pid
-    @port_check = port_check
+    @port_check = false
   end
+
+  # Collect Datameer Version / Instance Info
+  # ======================================================================
 
   def collect_datameer_versions
     Dir.glob(base_dir + '/*').select do |path_to_datameer|
@@ -32,21 +36,33 @@ class DatameerOrganizer
     end
   end
 
+  def collect_datameer_instance_info (port)
+    info = `lsof -i :#{port}`.split(' ')
+    port_check = info.include?("java" && "(LISTEN)")
+    pid = info[10]
+  end
+
+  # Datameer Instance Start / Stop
+  # ======================================================================
+
   def start_datameer_instance (datameer_version, port)
     if port_available?(port)
-      exec(base_dir + datameer_version + "/./bin/conductor.sh start")
+      `base_dir + datameer_version + "/./bin/conductor.sh start")`
+      collect_datameer_instance_info(port)
     else
       puts "Sorry, port is in use."
     end
-    collect_datameer_instance_info(port)
   end
 
   def stop_datameer_instance (datameer_version)
-    exec(base_dir + datameer_version + "/./bin/conductor.sh stop")
+    `base_dir + datameer_version + "/./bin/conductor.sh stop")`
   end
 
-  def get_pid (process_name)
-    pid = `pgrep #{process_name}`.strip
+  # Port / Process Information Gathering
+  # =======================================================================
+
+  def port_available? (port)
+    `lsof -i :#{port}`.empty?
   end
 
   def process_running? (pid)
@@ -62,19 +78,12 @@ class DatameerOrganizer
     end
   end
 
-  def port_available? (port)
-    `lsof -i :#{port}`.empty?
-  end
-
-
-
-  def collect_datameer_instance_info (port)
-      info = `lsof -i :#{port}`.split(' ')
-      port_check = info.include?("java" && "(LISTEN)")
-      pid = info[10]
-  end
-
-
-
+  # def get_pid (process_name)
+  #   pid = `pgrep #{process_name}`.strip
+  # end
 
 end
+
+# Driver Code
+# =========================================================================
+
