@@ -13,7 +13,6 @@ Add `ps aux` ability
 
 
 require_relative 'datameer_organizer.properties.rb'
-# require 'socket'
 
 class DatameerOrganizer
   include DatameerOrganizerProperties
@@ -56,16 +55,5 @@ class DatameerOrganizer
       puts "Odd; I couldn't check the status"
     end
   end
-
-
-
-  # def open_port? (host, port)
-  #   sock = Socket.new(:INET, :STREAM)
-  #   raw = Socket.sockaddr_in(port, host)
-  #   puts "#{port} open." if sock.connect(raw)
-
-  # rescue (Errno::ECONNREFUSED)
-  # rescue(Errno::ETIMEDOUT)
-  # end
 
 end
