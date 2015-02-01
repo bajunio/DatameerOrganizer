@@ -17,12 +17,13 @@ require_relative 'datameer_organizer.properties.rb'
 class DatameerOrganizer
   include DatameerOrganizerProperties
 
-  attr_accessor :datameer_versions
-  attr_accessor :base_dir
+  attr_accessor :datameer_versions, :base_dir, :pid, :port_check
 
   def initialize
     @base_dir = DatameerOrganizerProperties.base_dir
     @datameer_versions = []
+    @pid = pid
+    @port_check = port_check
   end
 
   def collect_datameer_versions
@@ -31,8 +32,13 @@ class DatameerOrganizer
     end
   end
 
-  def start_datameer_instance (datameer_version)
-    exec(base_dir + datameer_version + "/./bin/conductor.sh start")
+  def start_datameer_instance (datameer_version, port)
+    if port_available?(port)
+      exec(base_dir + datameer_version + "/./bin/conductor.sh start")
+    else
+      puts "Sorry, port is in use."
+    end
+    collect_datameer_instance_info(port)
   end
 
   def stop_datameer_instance (datameer_version)
@@ -56,9 +62,19 @@ class DatameerOrganizer
     end
   end
 
-  def port_listening? (port)
-    port_check = `lsof -i :#{port}`.split(' ').include?("java" && "(LISTEN)")
+  def port_available? (port)
+    `lsof -i :#{port}`.empty?
   end
+
+
+
+  def collect_datameer_instance_info (port)
+      info = `lsof -i :#{port}`.split(' ')
+      port_check = info.include?("java" && "(LISTEN)")
+      pid = info[10]
+  end
+
+
 
 
 end
