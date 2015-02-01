@@ -56,4 +56,9 @@ class DatameerOrganizer
     end
   end
 
+  def port_listening? (port)
+    port_check = `lsof -i :#{port}`.split(' ').include?("java" && "(LISTEN)")
+  end
+
+
 end
